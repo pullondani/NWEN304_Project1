@@ -6,9 +6,7 @@ const itemOperations = {
     },
     /* removes the item which has the "isMarked" field set to true*/
     remove() {
-        const ind = this.items.findIndex(item => item.isMarked)
-        console.log(ind);
-        this.items.splice(ind, 1)
+        this.items.forEach((item, i) => { if (item.isMarked) this.items.splice(i, 1) })
     },
     /* searches the item with a given argument id */
     search(id) {
@@ -16,7 +14,8 @@ const itemOperations = {
     },
     /* toggle the isMarked field of the item with the given argument id*/
     markUnMark(id) {
-        this.items.find(item => item.id === id).toggle()
+        let item = this.items.find(item => item.id === id)
+        if (item) item.toggle()
     },
     /* counts the total number of marked items */
     countTotalMarked() {

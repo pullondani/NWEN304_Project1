@@ -1,6 +1,6 @@
 window.addEventListener("load", init);
 function init() {
-
+    getExchangerate();
     clearAll();
     loadId();
     showTotal();
@@ -25,7 +25,9 @@ function loadId() {
 
 /* this function populates the values of #total, #mark and #unmark ids of the form */
 function showTotal() {
-    document.querySelector('#total').value = itemOperations.countTotalMarked()
+    document.querySelector('#total').innerText = itemOperations.items.length
+    document.querySelector('#mark').innerText = itemOperations.countTotalMarked()
+    document.querySelector('#unmark').innerText = itemOperations.items.length - itemOperations.countTotalMarked()
 }
 
 function bindEvents() {
@@ -37,9 +39,8 @@ function bindEvents() {
 
 /* this function deletes the selected record from itemOperations and prints the table using the function printTable*/
 function deleteRecords() {
-    console.log('Attempting to delete record')
     itemOperations.remove()
-    printTable()
+    printTable(itemOperations.items)
 }
 
 /* this function adds a new record in itemOperations and then calls printRecord(). showTotal(), loadId() and clearAll()*/
@@ -52,12 +53,13 @@ function addRecord() {
     let url = document.querySelector('#url').value
     let item = new Item(id, name, price, desc, color, url)
 
-    itemOperations.items.push(item)
-
-    printRecord(item)
-    showTotal()
-    loadId()
-    clearAll()
+    if (itemOperations.search(id) === undefined) {
+        itemOperations.items.push(item)
+        printRecord(item)
+        showTotal()
+        loadId()
+        clearAll()
+    }
 }
 
 /*this function fills (calls fillFields()) the form with the values of the item to edit after searching it in items */
@@ -70,7 +72,6 @@ function edit() {
 
 /*this function fills the form with the details of itemObject*/
 function fillFields(itemObject) {
-    console.log('FILLING THE FIELDS', itemObject.price);
     document.querySelector('#id').innerText = itemObject.id
     document.querySelector('#name').value = itemObject.name
     document.querySelector('#price').value = itemObject.price
@@ -94,10 +95,16 @@ function createIcon(className, fn, id) {
 
 /*this function updates the record that is edited and then prints the table using printTable()*/
 function updateRecord() {
-    let id = this.getAttribute('data-itemid');
+    let id = document.querySelector('#id').innerText
     let item = itemOperations.search(id)
-    print(item, this.getAttribute('data-itemid'))
-    printTable()
+
+    for (let key in item) {
+        if (key == 'isMarked' || key == 'id') {
+            continue;
+        }
+        item[key] = document.querySelector('#' + key).value
+    }
+    printTable(itemOperations.items)
 }
 
 /*this function toggles the color of the row when its trash button is selected and updates the marked and unmarked fields */
@@ -112,9 +119,8 @@ function trash() {
 
 /* this function calls printRecord for each item of items and then calls the showTotal function*/
 function printTable(items) {
-    for (item in items) {
-        item.printRecord()
-    }
+    document.querySelector('#items').innerHTML = ''
+    items.forEach(item => printRecord(item))
 
     showTotal()
 }
@@ -136,7 +142,17 @@ function printRecord(item) {
     lastTD.appendChild(createIcon('fas fa-edit', edit, item.id));
 }
 
+const ACCESS_KEY = '65a0814551922b80b1f31a18e7bea726'
+
 /* this function makes an AJAX call to http://apilayer.net/api/live to fetch and display the exchange rate for the currency selected*/
 function getExchangerate() {
-
+    let currency = document.querySelector('#exchange').value
+    fetch('http://api.currencylayer.com/live?' + new URLSearchParams({
+        access_key: ACCESS_KEY,
+        source: 'USD',
+        currencies: ['USD', 'AUD', 'CAD', 'NZD', 'GBP', 'EUR'],
+        format: 1
+    }))
+    .then(response => response.json())
+    .then(data => document.querySelector('#exrate').innerText = data['quotes']['USD' + currency])
 }
